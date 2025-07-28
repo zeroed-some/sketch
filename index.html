@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ASCII Sketch</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <h1>🖋️ sketch 🖋️</h1>
+  <p>Draw by dragging — every stroke prints a random ASCII char.</p>
+  <canvas id="board" width="800" height="600"></canvas>
+  <div class="toolbar">
+    <button id="clear">Clear</button>
+    <label>Size
+      <input type="range" id="size" min="12" max="64" value="24">
+    </label>
+    <div class="color-picker-wrapper">
+      <canvas id="colorWheel"></canvas>
+      <div class="color-preview" id="colorPreview"></div>
+    </div>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

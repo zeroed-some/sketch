@@ -1,0 +1,56 @@
+body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 1rem;
+      background: #202124;
+      color: #eee
+    }
+
+    h1 {
+      margin-top: 0;
+      padding-top: 1rem
+    }
+
+    canvas {
+      border: 1px solid #555;
+      background: #111;
+      cursor: crosshair
+    }
+
+    .toolbar {
+      margin-top: .8rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    button,
+    input[type=range] {
+      margin: 0 .5rem
+    }
+
+    /* Color wheel styles */
+    .color-picker-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    #colorWheel {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      cursor: crosshair;
+      border: 2px solid #444;
+    }
+
+    .color-preview {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #666;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
