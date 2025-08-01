@@ -2,15 +2,202 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ASCII Sketch</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <title>ASCII Sketch</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 1rem;
+      background: #202124;
+      color: #eee;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      margin-top: 0;
+      padding-top: 1rem
+    }
+
+    canvas {
+      border: 1px solid #555;
+      background: #111;
+      cursor: crosshair;
+    }
+    
+    #board {
+      position: relative;
+    }
+    
+    canvas.erasing {
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="white" stroke-width="2"/><line x1="6" y1="10" x2="14" y2="10" stroke="white" stroke-width="2"/></svg>') 10 10, auto;
+    }
+
+    .toolbar {
+      margin-top: .8rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      background: #333;
+      color: #eee;
+      border: 1px solid #555;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #444;
+    }
+
+    button.active {
+      background: #0a84ff;
+      border-color: #0a84ff;
+    }
+
+    input[type=range] {
+      margin: 0 .5rem
+    }
+
+    /* Color wheel styles */
+    .color-picker-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    #colorWheel {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      cursor: crosshair;
+      border: 2px solid #444;
+    }
+
+    .color-preview {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #666;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+
+    .tool-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    /* Effects Panel */
+    .effects-panel {
+      margin-top: 1rem;
+      background: #2a2a2a;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #444;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .effects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .effect-category {
+      margin-bottom: 1rem;
+    }
+
+    .effect-category h3 {
+      margin: 0 0 0.5rem 0;
+      color: #888;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .effect-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #1a1a1a;
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #333;
+      transition: all 0.2s;
+    }
+
+    .effect-toggle:hover {
+      background: #222;
+      border-color: #555;
+    }
+
+    .effect-toggle.active {
+      background: #0a84ff22;
+      border-color: #0a84ff;
+    }
+
+    .effect-toggle input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .effect-toggle label {
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.9rem;
+      flex: 1;
+    }
+
+    /* Canvas container for overlay effects */
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    #effectsCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      background: none;
+    }
+
+    #effectsCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+  </style>
 </head>
 <body>
-  <h1>🖋️ sketch 🖋️</h1>
-  <p>Draw by dragging — every stroke prints a random ASCII char.</p>
-  <canvas id="board" width="800" height="600"></canvas>
+  <h1>🖋️ sketch 🖋️</h1>
+  <p>Draw by dragging — every stroke prints a random ASCII char.</p>
+  
+  <div class="canvas-container">
+    <canvas id="board" width="800" height="600"></canvas>
+    <canvas id="effectsCanvas" width="800" height="600"></canvas>
+  </div>
+  
   <div class="toolbar">
-    <button id="clear">Clear</button>
+    <div class="tool-group">
+      <button id="drawTool" class="active">✏️ Draw</button>
+      <button id="eraseTool">🧹 Erase</button>
+    </div>
+    <button id="clear">Clear All</button>
+    <button id="download">💾 Save Image</button>
     <label>Size
       <input type="range" id="size" min="12" max="64" value="24">
     </label>
@@ -19,6 +206,181 @@
       <div class="color-preview" id="colorPreview"></div>
     </div>
   </div>
+
+  <div class="effects-panel">
+    <h2>Visual Effects</h2>
+    
+    <div class="effect-category">
+      <h3>Basic Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="glowEffect">
+          <label for="glowEffect">✨ Glow</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="embossEffect">
+          <label for="embossEffect">🗿 Emboss</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="outlineEffect">
+          <label for="outlineEffect">⭕ Outline</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="shadowEffect">
+          <label for="shadowEffect">🌑 Shadow</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="effect-category">
+      <h3>Animation Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="pulseEffect">
+          <label for="pulseEffect">💗 Pulse</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="fadeInEffect">
+          <label for="fadeInEffect">👻 Fade In</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="typewriterEffect">
+          <label for="typewriterEffect">⌨️ Typewriter</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="jitterEffect">
+          <label for="jitterEffect">📳 Jitter</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="effect-category">
+      <h3>Style Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="rainbowEffect">
+          <label for="rainbowEffect">🌈 Rainbow</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="gradientEffect">
+          <label for="gradientEffect">🎨 Gradient</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="doubleVisionEffect">
+          <label for="doubleVisionEffect">👀 Double Vision</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="mirrorEffect">
+          <label for="mirrorEffect">🪞 Mirror</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="effect-category">
+      <h3>Particle Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="sparklesEffect">
+          <label for="sparklesEffect">✨ Sparkles</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="dripEffect">
+          <label for="dripEffect">💧 Drip</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="explodeEffect">
+          <label for="explodeEffect">💥 Explode</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="smokeEffect">
+          <label for="smokeEffect">💨 Smoke Trail</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="effect-category">
+      <h3>Transform Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="rotationEffect">
+          <label for="rotationEffect">🔄 Rotation</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="waveEffect">
+          <label for="waveEffect">🌊 Wave</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="scatterEffect">
+          <label for="scatterEffect">🎲 Scatter</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="sizeVarianceEffect">
+          <label for="sizeVarianceEffect">📏 Size Variance</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="effect-category">
+      <h3>Special Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="matrixEffect">
+          <label for="matrixEffect">💊 Matrix Rain</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="glitchEffect">
+          <label for="glitchEffect">📺 Glitch</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="neonFlickerEffect">
+          <label for="neonFlickerEffect">💡 Neon Flicker</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="echoEffect">
+          <label for="echoEffect">🔊 Echo</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="effect-category">
+      <h3>Motion Effects</h3>
+      <div class="effects-grid">
+        <div class="effect-toggle">
+          <input type="checkbox" id="spiralEffect">
+          <label for="spiralEffect">🌪️ Spiral</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="orbitEffect">
+          <label for="orbitEffect">💫 Orbit</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="magneticEffect">
+          <label for="magneticEffect">🎯 Magnetic</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="vortexEffect">
+          <label for="vortexEffect">🌀 Vortex</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="snowEffect">
+          <label for="snowEffect">❄️ Snow</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="fireworksEffect">
+          <label for="fireworksEffect">🎆 Fireworks</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="lightningEffect">
+          <label for="lightningEffect">⚡ Lightning</label>
+        </div>
+        <div class="effect-toggle">
+          <input type="checkbox" id="pixelDissolveEffect">
+          <label for="pixelDissolveEffect">👾 Pixel Dissolve</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="js/app.js"></script>
 </body>
 </html>
